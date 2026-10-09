@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: aws-actions/setup-sam@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: SAM Build
+        run: sam build
+      - name: SAM Deploy
+        run: |
+          sam deploy --stack-name pollution-backend \
+            --resolve-s3 \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+            --parameter-overrides DemoMode=false MapAllowedReferer="http://pollution-frontend-kittu181707.s3-website-us-east-1.amazonaws.com/*" \
+            --no-confirm-changeset --no-fail-on-empty-changeset
+
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Install dependencies
+        run: cd frontend && npm ci
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+        env:
+          VITE_API_BASE_URL: "https://f5vtqmx8ne.execute-api.us-east-1.amazonaws.com/Prod"
+          VITE_AWS_REGION: "us-east-1"
+          VITE_AMAZON_LOCATION_API_KEY: "v1.public.eyJqdGkiOiI1ZDFkNGIyYy03OWU2LTQ2NzktYTJhNC01ZGU0M2IyZTUwYWIifRZPKNApA4lAsj_Ow3ch1Mn0qDJBKEoo8e2C5g9xMBFpujoRMQ4hZ389RcXWYmH_5QnbwDm6XBZHKO8EWkkdYP3wnv8Q4u0cAFw9sC92MTxMnqosEkRlc5k22RGCRocH_E05dmra4VLobOeOTYR78l6rZbV-SStHxwzHK-_im3QWTm3lQRTh47d2c_5fQXO-LjxxPNmKDwP4lnl0rZFjsXChkmUTNRwLTw8LQ2uKzI7G5Ccpz9iAOqSuRnyzcdYUjLLvkNEqPIZ4iFuMH4rdaAmSnAx5NwTuCAzdrKi_rqjb1VFXP7fNsOVR7Uxrie8XyFuDe0PJlXBQ6axiKTRWtEc.ZWU0ZWIzMTktMWRhNi00Mzg0LTllMzYtNzlmMDU3MjRmYTkx"
+          VITE_AMAZON_LOCATION_MAP_STYLE: "Standard"
+      - name: Sync to S3
+        run: aws s3 sync frontend/dist s3://pollution-frontend-kittu181707 --delete
+
