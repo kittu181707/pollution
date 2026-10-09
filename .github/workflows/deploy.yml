@@ -26,7 +26,7 @@ jobs:
           sam deploy --stack-name pollution-backend \
             --resolve-s3 \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-            --parameter-overrides DemoMode=false MapAllowedReferer="http://pollution-frontend-kittu181707.s3-website-us-east-1.amazonaws.com/*" \
+            --parameter-overrides DemoMode=false MapAllowedReferer="https://main.d22y9q2ay7ukew.amplifyapp.com/*" \
             --no-confirm-changeset --no-fail-on-empty-changeset
 
   deploy-frontend:
@@ -54,6 +54,14 @@ jobs:
           VITE_AWS_REGION: "us-east-1"
           VITE_AMAZON_LOCATION_API_KEY: "v1.public.eyJqdGkiOiI1ZDFkNGIyYy03OWU2LTQ2NzktYTJhNC01ZGU0M2IyZTUwYWIifRZPKNApA4lAsj_Ow3ch1Mn0qDJBKEoo8e2C5g9xMBFpujoRMQ4hZ389RcXWYmH_5QnbwDm6XBZHKO8EWkkdYP3wnv8Q4u0cAFw9sC92MTxMnqosEkRlc5k22RGCRocH_E05dmra4VLobOeOTYR78l6rZbV-SStHxwzHK-_im3QWTm3lQRTh47d2c_5fQXO-LjxxPNmKDwP4lnl0rZFjsXChkmUTNRwLTw8LQ2uKzI7G5Ccpz9iAOqSuRnyzcdYUjLLvkNEqPIZ4iFuMH4rdaAmSnAx5NwTuCAzdrKi_rqjb1VFXP7fNsOVR7Uxrie8XyFuDe0PJlXBQ6axiKTRWtEc.ZWU0ZWIzMTktMWRhNi00Mzg0LTllMzYtNzlmMDU3MjRmYTkx"
           VITE_AMAZON_LOCATION_MAP_STYLE: "Standard"
-      - name: Sync to S3
-        run: aws s3 sync frontend/dist s3://pollution-frontend-kittu181707 --delete
+      - name: Deploy to Amplify
+        run: |
+          cd frontend/dist
+          zip -r ../deploy.zip .
+          cd ..
+          DEPLOYMENT_INFO=$(aws amplify create-deployment --app-id d22y9q2ay7ukew --branch-name main)
+          JOB_ID=$(echo $DEPLOYMENT_INFO | jq -r .jobId)
+          UPLOAD_URL=$(echo $DEPLOYMENT_INFO | jq -r .zipUploadUrl)
+          curl -s -T deploy.zip "$UPLOAD_URL"
+          aws amplify start-deployment --app-id d22y9q2ay7ukew --branch-name main --job-id $JOB_ID
 
