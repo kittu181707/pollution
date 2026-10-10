@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const root = new URL('..', import.meta.url).pathname;
+import { fileURLToPath } from 'node:url';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (relative) => readFileSync(join(root, relative), 'utf8');
 const assert = (condition, message) => {
   if (!condition) throw new Error('UI contract failed: ' + message);

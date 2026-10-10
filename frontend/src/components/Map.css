@@ -28,7 +28,7 @@
   overflow: hidden;
   border: 1px solid rgba(210,218,212,.92);
   border-radius: 11px;
-  box-shadow: 0 5px 18px rgba(28,42,33,.12);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 .map-live-badge {
   position: absolute;
@@ -43,10 +43,10 @@
   border-radius: 999px;
   background: rgba(15,122,80,.92);
   color: #fff;
-  box-shadow: 0 5px 16px rgba(15,55,37,.18);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   backdrop-filter: blur(10px);
   font-size: 9px;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: .075em;
 }
 .map-live-badge.fallback {
@@ -65,10 +65,10 @@
   border-radius: 11px;
   background: rgba(255,255,255,.91);
   color: #3e4942;
-  box-shadow: 0 5px 16px rgba(28,42,33,.12);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
   backdrop-filter: blur(10px);
   font-size: 10px;
-  font-weight: 720;
+  font-weight: 500;
 }
 .map-route-legend span {
   display: inline-flex;
@@ -96,7 +96,7 @@
   place-items: center;
   color: #617069;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 500;
   background: linear-gradient(135deg,#eef3ef,#f8faf8);
 }
 .map-fallback {
