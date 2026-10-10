@@ -94,11 +94,7 @@ export function TodayScreen({
             </>
           )}
         </div>
-            
-        <div className="map-col">
-              {mapComponent || <div className="snapshot-empty" style={{height: '100%'}}><AlertTriangle size={20}/> <span>Map will appear here</span></div>}
-            </div>
-          </div>
+      </div>
 
           {/* BOTTOM SECTION */}
           {analysis && m && (

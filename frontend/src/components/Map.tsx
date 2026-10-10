@@ -214,9 +214,14 @@ export function Map({ trips, isDemo = false }: { trips: TripAnalysis[]; isDemo?:
         setStatus('live');
       });
 
-      map.on('error', (e) => { console.error('MapLibre Map Error:', e);
+      map.on('error', (e) => {
+        console.error('MapLibre Map Error:', e);
         if (!loaded && active) {
-          map.remove();
+          try {
+            map.remove();
+          } catch (err) {
+            console.error('MapLibre map.remove() error:', err);
+          }
           mapRef.current = null;
           setStatus('fallback');
         }

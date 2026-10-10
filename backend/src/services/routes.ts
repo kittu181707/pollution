@@ -45,7 +45,17 @@ export async function routesForTrip(input: {
     };
   }
 
-  const response: any = await (await client()).send(new CalculateRoutesCommand(command));
+  let response: any;
+  try {
+    response = await (await client()).send(new CalculateRoutesCommand(command));
+  } catch (err: any) {
+    if (err.name === 'ValidationException' && err.message?.includes('Departure time')) {
+      delete command.DepartureTime;
+      response = await (await client()).send(new CalculateRoutesCommand(command));
+    } else {
+      throw err;
+    }
+  }
   const routes: any[] = response.Routes || [];
   if (!routes.length) throw new Error(`Amazon Location returned no ${input.mode} route`);
 

@@ -1,36 +1,49 @@
-import { useRef } from 'react';
-import { ArrowLeft, FileUp, Plus, Trash2 } from 'lucide-react';
+﻿import { useRef } from 'react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import type { AgendaPayload, CalendarEvent } from '../types';
 import { uid } from '../utils';
 
-export function ImportScreen({ agenda, setAgenda, mode, onBack, onContinue, onIcs, busy, error }: {
+export function ImportScreen({ agenda, setAgenda, mode, onBack, onContinue, busy, error }: {
   agenda: AgendaPayload; setAgenda: (agenda: AgendaPayload) => void; mode: 'import'|'manual'; onBack: () => void; onContinue: () => void;
-  onIcs: (file: File) => void; busy: boolean; error?: string;
+  onIcs?: (file: File) => void; busy: boolean; error?: string;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
   const update = (id: string, patch: Partial<CalendarEvent>) => setAgenda({ ...agenda, events: agenda.events.map((event) => event.eventId === id ? { ...event, ...patch } : event) });
   const add = () => setAgenda({ ...agenda, events: [...agenda.events, { eventId: uid('event'), title: '', location: '', start: '09:00', end: '10:00', fixed: true }] });
   const remove = (id: string) => setAgenda({ ...agenda, events: agenda.events.filter((event) => event.eventId !== id) });
-  return <div className="screen wide">
-    <button className="back" onClick={onBack}><ArrowLeft/>Back</button>
-    <div className="screen-title"><p className="eyebrow">IMPORT DAY</p><h1>Today's plan</h1><p>Fixed appointments stay fixed. Confirm the locations and times we should plan around.</p></div>
-    <div className="toolbar-card">
-      <div><label>Home / starting location</label><input value={agenda.homeLocation} onChange={(e) => setAgenda({ ...agenda, homeLocation: e.target.value })} placeholder="Home, city"/></div>
-      {mode === 'import' && <><input ref={fileRef} hidden type="file" accept=".ics,text/calendar" onChange={(e) => e.target.files?.[0] && onIcs(e.target.files[0])}/><button className="secondary" disabled={busy} onClick={() => fileRef.current?.click()}><FileUp/>{busy ? 'Importing…' : 'Import .ICS'}</button></>}
+  
+  return <div className="screen">
+    <button className="back" onClick={onBack} style={{ marginBottom: '24px' }}><ArrowLeft/>Back</button>
+    <div className="screen-title" style={{ marginBottom: '24px' }}>
+      <h1 style={{ fontSize: '24px' }}>Where to?</h1>
     </div>
-    {error && <div className="error-banner">{error}</div>}
-    <div className="event-list">
-      {agenda.events.map((event, index) => <article className="event-card" key={event.eventId}>
-        <div className="event-index">{String(index + 1).padStart(2, '0')}</div>
-        <div className="event-fields">
-          <input className="event-title" value={event.title} placeholder="Event name" onChange={(e) => update(event.eventId, { title: e.target.value })}/>
-          <input value={event.location} placeholder="Location" onChange={(e) => update(event.eventId, { location: e.target.value })}/>
-          <div className="time-row"><label>Start<input type="time" value={event.start} onChange={(e) => update(event.eventId, { start: e.target.value })}/></label><label>End<input type="time" value={event.end} onChange={(e) => update(event.eventId, { end: e.target.value })}/></label><label className="check"><input type="checkbox" checked={event.fixed} onChange={(e) => update(event.eventId, { fixed: e.target.checked })}/>Fixed</label></div>
+    
+    <div className="toolbar-card" style={{ padding: '0', background: 'transparent', border: 'none', gap: '12px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--surface-active)', padding: '12px 16px', borderRadius: '12px' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text)', flexShrink: 0 }} />
+        <input style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '16px' }} value={agenda.homeLocation} onChange={(e) => setAgenda({ ...agenda, homeLocation: e.target.value })} placeholder="Pickup location" />
+      </div>
+      
+      {agenda.events.map((event, index) => (
+        <div key={event.eventId} style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--surface-active)', padding: '12px 16px', borderRadius: '12px' }}>
+          <div style={{ width: '8px', height: '8px', background: 'var(--ink)', flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+             <input style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '16px' }} value={event.location} placeholder="Destination" onChange={(e) => update(event.eventId, { location: e.target.value, title: e.target.value })}/>
+             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', color: 'var(--muted)' }}>
+               <span>Arrival by:</span>
+               <input type="time" style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--ink)' }} value={event.start} onChange={(e) => update(event.eventId, { start: e.target.value, end: e.target.value })}/>
+             </div>
+          </div>
+          <button className="icon-button" style={{ background: 'transparent' }} onClick={() => remove(event.eventId)}><Trash2 size={18}/></button>
         </div>
-        <button className="icon-button danger" onClick={() => remove(event.eventId)} aria-label="Remove event"><Trash2/></button>
-      </article>)}
+      ))}
     </div>
-    <button className="dashed" onClick={add}><Plus/>Add event manually</button>
-    <div className="sticky-actions"><button className="primary" disabled={!agenda.events.length || agenda.events.some((e) => !e.title || !e.location)} onClick={onContinue}>Continue</button></div>
+    
+    <button className="text-button" onClick={add} style={{ marginTop: '16px' }}><Plus size={18}/> Add stop</button>
+    
+    {error && <div className="error-banner" style={{ marginTop: '16px' }}>{error}</div>}
+    
+    <div style={{ marginTop: '32px' }}>
+      <button className="primary large full" disabled={!agenda.events.length || agenda.events.some((e) => !e.location)} onClick={onContinue}>Review route</button>
+    </div>
   </div>;
 }

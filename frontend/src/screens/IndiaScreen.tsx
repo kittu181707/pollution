@@ -136,8 +136,15 @@ export function IndiaScreen() {
         setStatus('live');
       });
 
-      map.on('error', (e) => { console.error('MapLibre IndiaScreen Error:', e);
-        if (!loaded && active) setStatus('fallback');
+      map.on('error', (e) => {
+        console.error('MapLibre IndiaScreen Error:', e);
+        if (!loaded && active) {
+          try {
+            map.remove();
+          } catch (err) {}
+          mapRef.current = null;
+          setStatus('fallback');
+        }
       });
 
     }).catch(() => {
