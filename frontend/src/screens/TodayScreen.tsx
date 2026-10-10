@@ -1,5 +1,4 @@
 import { Search, ArrowRight, Calendar, AlertTriangle, ArrowDown, Clock3, Sun, Wind, HelpCircle, Leaf, Users } from 'lucide-react';
-import { LiveEnvironmentSnapshot } from '../components/LiveEnvironmentSnapshot';
 import type { AgendaPayload, JourneyInput, DayAnalysis, TripAnalysis, Coordinates } from '../types';
 import { shortTime } from '../utils';
 
@@ -41,15 +40,6 @@ export function TodayScreen({
 
   return (
     <div className="dashboard-container">
-      {/* HEADER SECTION */}
-      <header className="dashboard-header">
-        <div className="screen-title">
-          <h1>Good morning.<br/>Here's your environmental plan for today.</h1>
-        </div>
-        <div className="chips">
-          <LiveEnvironmentSnapshot homeLocation={agenda?.homeLocation || 'Home'} liveLocation={liveLocation} isDemo={isDemo} chipMode={true} />
-        </div>
-      </header>
 
       {error && <div className="error-banner"><AlertTriangle size={16}/> {error}</div>}
 
