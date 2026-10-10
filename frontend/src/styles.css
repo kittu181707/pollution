@@ -555,3 +555,75 @@
     flex: 1 1 50%;
   }
 }
+
+/* Compact shared dashboard: the top status row and live map stay clear of all screens. */
+html, body, #root { min-width: 0; height: 100%; }
+body { overflow-x: hidden; }
+.app-container { height: 100dvh; display: flex; flex-direction: column; min-width: 0; }
+.app-topbar { flex: 0 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px clamp(18px, 3vw, 44px); border-bottom: 1px solid var(--line); background: var(--surface); }
+.app-welcome { min-width: 0; flex: 1; }
+.welcome-kicker { display: block; margin-bottom: 5px; color: var(--green-dark); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.app-welcome h1 { margin: 0; font-size: clamp(21px, 2vw, 30px); line-height: 1.2; letter-spacing: -.035em; font-weight: 750; }
+.app-welcome h1 span { font-weight: 500; color: #334155; }
+.top-environment { flex: 0 0 auto; margin-left: auto; max-width: 50%; }
+.top-environment .environment-chip-row { flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.top-environment .env-chip { white-space: nowrap; font-size: 12px; }
+.global-split-layout { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(300px, 370px); align-items: start; gap: clamp(15px, 2.5vw, 34px); padding: 22px clamp(18px, 3vw, 44px) 106px; height: auto; min-height: 0; overflow-y: auto; overflow-x: hidden; background: #f9fafb; }
+.global-panel-col { display: block; border: 0; max-width: none; min-width: 0; min-height: 0; height: auto; overflow: visible; background: transparent; }
+.global-panel-col > .screen { width: 100%; max-width: 850px; height: auto; padding: 8px 0 20px; overflow: visible; margin: 0; }
+.global-panel-col .dashboard-container { padding: 8px 0 24px; height: auto; overflow: visible; gap: 18px; }
+.global-panel-col .dashboard-middle { display: block; min-height: 0; }
+.global-panel-col .empty-agenda { max-width: 570px; padding: 30px !important; border: 1px solid var(--line) !important; border-radius: 18px; background: white !important; text-align: left; }
+.global-panel-col .empty-agenda .actions { margin: 0; max-width: 460px; }
+.global-panel-col .empty-agenda .actions .primary, .global-panel-col .empty-agenda .actions .secondary { width: 100%; }
+.global-panel-col .dashboard-bottom { grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
+.global-panel-col .dashboard-footer { gap: 12px; }
+.global-panel-col .journey-route { flex-wrap: wrap; font-size: 14px; }
+.global-panel-col .dashboard-card { padding: 16px; }
+.global-map-col { display: block; position: sticky; top: 0; flex: unset; width: 100%; height: auto; min-height: 0; overflow: visible; align-self: start; }
+.compact-map-card { padding: 14px; background: white; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 9px 26px rgba(15, 23, 42, .05); }
+.compact-map-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.compact-map-head h2 { font-size: 17px; letter-spacing: -.03em; margin: 0; }
+.location-indicator { color: var(--muted); font-size: 10px; text-align: right; max-width: 145px; }
+.compact-map-frame { height: 275px; border-radius: 14px; overflow: hidden; }
+.compact-map-note { margin: 11px 3px 2px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.demo-banner { border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; background: #fff0ed; color: #9a3412; font-size: 12px; font-weight: 650; }
+.global-panel-col .screen-title h1 { line-height: 1.2; }
+@media (max-width: 1050px) { .global-split-layout { grid-template-columns: minmax(0,1fr) 320px; } .app-topbar { align-items: flex-start; } }
+@media (max-width: 760px) {
+  .app-topbar { flex-direction: column; gap: 12px; padding: 18px 16px 14px; }
+  .top-environment { max-width: 100%; margin: 0; width: 100%; }
+  .top-environment .environment-chip-row { justify-content: flex-start; }
+  .global-split-layout { display: flex !important; flex-direction: column-reverse; padding: 16px 16px 112px; gap: 16px; overflow-y: auto; }
+  .global-map-col { width: 100%; position: relative; top: auto; flex: none; }
+  .global-panel-col { width: 100%; flex: none; }
+  .compact-map-frame { height: 230px; }
+  .global-panel-col .empty-agenda { padding: 20px !important; }
+  .global-panel-col .dashboard-footer { grid-template-columns: 1fr; }
+  .global-panel-col .dashboard-bottom { grid-template-columns: 1fr; }
+}
+
+/* Multi-stop day planner */
+.itinerary-editor { display: grid; gap: 16px; }
+.itinerary-editor .screen-title { margin: 0 0 3px; }
+.itinerary-editor .screen-title p { margin: 9px 0 0; }
+.itinerary-section { padding: 18px; border: 1px solid var(--line); background: white; border-radius: 16px; display: grid; gap: 10px; }
+.itinerary-section h3, .itinerary-stops-head h3 { margin: 0; font-size: 16px; }
+.itinerary-section input[type=file] { display: none; }
+.itinerary-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.itinerary-topline label { display: flex; align-items: center; gap: 8px; }
+.itinerary-topline input { max-width: 190px; }
+.origin-row { display: flex; gap: 10px; }
+.origin-row input { min-width: 0; flex: 1; }
+.origin-row button { flex: 0 0 auto; }
+.itinerary-stops-head h3 span { font-size: 12px; font-weight: 500; color: var(--muted); }
+.itinerary-list { display: grid; gap: 12px; }
+.itinerary-stop { display: grid; grid-template-columns: 30px minmax(0,1fr) 38px; gap: 12px; align-items: start; padding: 16px; background: white; border: 1px solid var(--line); border-radius: 16px; }
+.stop-number { display: grid; place-items: center; background: #d1fae5; color: #047857; font-size: 13px; font-weight: 800; border-radius: 50%; height: 30px; width: 30px; }
+.stop-inputs { min-width: 0; display: grid; gap: 10px; }
+.stop-time-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.stop-time-grid label { display: grid; gap: 5px; }
+.itinerary-stop .icon-button { background: transparent; }
+.editor-warning { padding: 10px 13px; color: #92400e; font-size: 12px; background: #fffbeb; border-radius: 10px; }
+.itinerary-submit { min-height: 50px !important; justify-content: center !important; }
+@media(max-width: 600px) { .origin-row { flex-wrap: wrap; } .origin-row button { width: 100%; } .itinerary-stop { gap: 7px; padding: 12px; grid-template-columns: 25px minmax(0,1fr) 32px; } .stop-time-grid { gap: 6px; } }

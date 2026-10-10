@@ -2,8 +2,8 @@ import type { AnalyzeDayRequest, PreparedRequest, TransportMode } from '../types
 import { isValidDate, isValidTime, timeToMinutes } from '../core/time';
 
 const MODES = new Set<TransportMode>(['car', 'bike', 'bus', 'metro', 'walk']);
-const MAX_EVENTS = 6;
-const MAX_JOURNEYS = 7;
+const MAX_EVENTS = 12;
+const MAX_JOURNEYS = 13;
 
 function clean(value: unknown, field: string, max = 200) {
   if (typeof value !== 'string' || !value.trim()) throw new Error(`${field} is required`);
