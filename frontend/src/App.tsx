@@ -188,7 +188,7 @@ export default function App() {
     <div className="app-container">
       <BottomNav active={tab} onChange={onNav} />
       <main className="main-content">
-        {isDemo && <div style={{background: 'var(--red)', color: 'white', padding: '6px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold'}}>DEMO MODE ACTIVE</div>}
+        {isDemo && <div style={{background: 'var(--red)', color: 'white', padding: '6px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0}}>DEMO MODE ACTIVE</div>}
         {showMap ? (
           <div className="split-layout">
             <div className="split-left">{content}</div>
