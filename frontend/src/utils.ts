@@ -92,7 +92,7 @@ export function deriveJourneys(events: CalendarEvent[], homeLocation: string): J
       destination: sorted[index].location,
       departureTime: sorted[index - 1].end,
       arriveBy: sorted[index].start,
-      mode: 'metro',
+      mode: 'car',
     });
   }
 
