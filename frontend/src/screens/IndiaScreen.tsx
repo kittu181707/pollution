@@ -95,7 +95,7 @@ export function IndiaScreen() {
         pitchWithRotate: false,
       });
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right'); map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }), 'top-right');
 
       let loaded = false;
       map.once('load', () => {
@@ -136,7 +136,7 @@ export function IndiaScreen() {
         setStatus('live');
       });
 
-      map.on('error', () => {
+      map.on('error', (e) => { console.error('MapLibre IndiaScreen Error:', e);
         if (!loaded && active) setStatus('fallback');
       });
 

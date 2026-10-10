@@ -202,7 +202,7 @@ export function Map({ trips, isDemo = false }: { trips: TripAnalysis[]; isDemo?:
       });
 
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right');
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right'); map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }), 'top-right');
 
       let loaded = false;
       map.once('load', () => {
@@ -214,7 +214,7 @@ export function Map({ trips, isDemo = false }: { trips: TripAnalysis[]; isDemo?:
         setStatus('live');
       });
 
-      map.on('error', () => {
+      map.on('error', (e) => { console.error('MapLibre Map Error:', e);
         if (!loaded && active) {
           map.remove();
           mapRef.current = null;

@@ -56,7 +56,11 @@ Resources:
         AllowResources:
           - !Sub 'arn:${AWS::Partition}:geo-maps:${AWS::Region}::provider/default'
         AllowReferers:
-          - !Ref MapAllowedReferer
+            - !Ref MapAllowedReferer
+            - 'http://localhost:5173/*'
+            - 'http://127.0.0.1:5173/*'
+            - 'http://localhost:4173/*'
+            - 'http://127.0.0.1:4173/*'
 
   PlansTable:
     Type: AWS::DynamoDB::Table
@@ -429,3 +433,4 @@ Outputs:
   StateMachineArn:
     Description: Optimization workflow ARN
     Value: !Ref OptimizationStateMachine
+
