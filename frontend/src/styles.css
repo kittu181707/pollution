@@ -416,3 +416,67 @@
   .india-live-map { min-height: 440px; }
   .india-station-grid { grid-template-columns: 1fr; padding: 18px; }
 }
+
+/* NEW DASHBOARD GRID */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 24px 80px;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+}
+.dashboard-header .screen-title {
+  margin: 0;
+}
+.dashboard-header .chips {
+  flex-shrink: 0;
+  transform: scale(0.9);
+  transform-origin: right bottom;
+  margin: 0;
+}
+
+.dashboard-middle {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  min-height: 400px;
+}
+.dashboard-middle .map-col {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.dashboard-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.dashboard-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-card h3 {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+
+.dashboard-footer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}

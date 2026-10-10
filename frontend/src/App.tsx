@@ -71,7 +71,17 @@ export default function App() {
         departureTime: ['07:45', '12:00', '17:45', '19:20'][index] || journey.departureTime,
         mode: (['car', 'metro', 'metro', 'bike'][index] || journey.mode) as JourneyInput['mode'],
       }));
-      setIsDemo(true); setAgenda(demo); setJourneys(demoJourneys); setAgendaMode('manual'); setStep('travel');
+      setIsDemo(true); setAgenda(demo); setJourneys(demoJourneys); setAgendaMode('manual');
+      
+      if (userId) {
+        const result = await api.analyzeDay({ ...demo, userId, journeys: demoJourneys, maxExtraMinutes: maxExtra, demoMode: true });
+        setAnalysis(result);
+        if (result.changes.length > 0) {
+          const whyResult = await api.explain(result.planId, result.changes[0]);
+          setWhyText(whyResult.explanation);
+        }
+      }
+      setStep('landing');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load demo day');
     } finally {
@@ -111,7 +121,8 @@ export default function App() {
     setStep('analysis'); setError(undefined); setBusy(true);
     try {
       const result = await api.analyzeDay({ ...agenda, userId, journeys, maxExtraMinutes: maxExtra, demoMode: isDemo });
-      setAnalysis(result); setStep('overview');
+      setAnalysis(result); 
+      setStep('landing'); // Render dashboard
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Analysis failed');
     } finally {
@@ -160,7 +171,7 @@ export default function App() {
 
   const onNav = (next: NavTab) => {
     setTab(next);
-    if (next === 'today') setStep(analysis ? 'overview' : 'landing');
+    if (next === 'today') setStep('landing');
     if (next === 'optimize') setStep(analysis ? 'final' : 'landing');
   };
 
@@ -171,7 +182,7 @@ export default function App() {
 
   let content;
   if (step === 'landing') {
-    content = <TodayScreen agenda={agenda} journeys={journeys} busy={busy} isDemo={isDemo} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error}/>;
+    content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} mapComponent={<Map trips={analysis?.trips || []} isDemo={isDemo} />}/>;
   }
   else if (step === 'import' || step === 'manual') content = <ImportScreen agenda={agenda} setAgenda={setAgenda} mode={step} onBack={() => setStep('landing')} onContinue={continueToTravel} onIcs={importIcs} busy={busy} error={error}/>;
   else if (step === 'travel') content = <TravelScreen journeys={journeys} setJourneys={setJourneys} maxExtra={maxExtra} setMaxExtra={setMaxExtra} onBack={() => setStep(agendaMode)} onAnalyze={runAnalysis} isDemo={isDemo}/>;
@@ -179,26 +190,15 @@ export default function App() {
   else if (step === 'overview' && analysis) content = <OverviewScreen analysis={analysis} onChanges={() => setStep('changes')} onKeep={() => { setAnalysis(null); setStep('landing'); }}/>;
   else if (step === 'changes' && analysis) content = <ChangesScreen analysis={analysis} onBack={() => setStep('overview')} onWhy={openWhy} onFinal={() => setStep('final')}/>;
   else if (step === 'final' && analysis) content = <FinalPlanScreen analysis={analysis} onBack={() => setStep('changes')} onAccept={acceptPlan} busy={busy}/>;
-  else if (step === 'accepted' && accepted) content = <AcceptedScreen plan={accepted} onDone={() => { setTab('today'); setStep('overview'); }}/>;
-  else content = <TodayScreen agenda={agenda} journeys={journeys} busy={busy} isDemo={isDemo} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error}/>;
-
-  const showMap = analysis && ['overview', 'changes', 'final', 'accepted'].includes(step);
+  else if (step === 'accepted' && accepted) content = <AcceptedScreen plan={accepted} onDone={() => { setTab('today'); setStep('landing'); }}/>;
+  else content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} mapComponent={<Map trips={analysis?.trips || []} isDemo={isDemo} />}/>;
 
   return (
     <div className="app-container">
       <BottomNav active={tab} onChange={onNav} />
       <main className="main-content">
         {isDemo && <div style={{background: 'var(--red)', color: 'white', padding: '6px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0}}>DEMO MODE ACTIVE</div>}
-        {showMap ? (
-          <div className="split-layout">
-            <div className="split-left">{content}</div>
-            <div className="split-right">
-              <Map trips={analysis!.trips} isDemo={isDemo} />
-            </div>
-          </div>
-        ) : (
-          content
-        )}
+        {content}
         
         {whyTrip && <Drawer title="Why this changed" onClose={() => setWhyTrip(null)}>
           <div className="why-body">
