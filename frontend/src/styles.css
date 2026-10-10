@@ -602,3 +602,28 @@ body { overflow-x: hidden; }
   .global-panel-col .dashboard-footer { grid-template-columns: 1fr; }
   .global-panel-col .dashboard-bottom { grid-template-columns: 1fr; }
 }
+
+/* Multi-stop day planner */
+.itinerary-editor { display: grid; gap: 16px; }
+.itinerary-editor .screen-title { margin: 0 0 3px; }
+.itinerary-editor .screen-title p { margin: 9px 0 0; }
+.itinerary-section { padding: 18px; border: 1px solid var(--line); background: white; border-radius: 16px; display: grid; gap: 10px; }
+.itinerary-section h3, .itinerary-stops-head h3 { margin: 0; font-size: 16px; }
+.itinerary-section input[type=file] { display: none; }
+.itinerary-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.itinerary-topline label { display: flex; align-items: center; gap: 8px; }
+.itinerary-topline input { max-width: 190px; }
+.origin-row { display: flex; gap: 10px; }
+.origin-row input { min-width: 0; flex: 1; }
+.origin-row button { flex: 0 0 auto; }
+.itinerary-stops-head h3 span { font-size: 12px; font-weight: 500; color: var(--muted); }
+.itinerary-list { display: grid; gap: 12px; }
+.itinerary-stop { display: grid; grid-template-columns: 30px minmax(0,1fr) 38px; gap: 12px; align-items: start; padding: 16px; background: white; border: 1px solid var(--line); border-radius: 16px; }
+.stop-number { display: grid; place-items: center; background: #d1fae5; color: #047857; font-size: 13px; font-weight: 800; border-radius: 50%; height: 30px; width: 30px; }
+.stop-inputs { min-width: 0; display: grid; gap: 10px; }
+.stop-time-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.stop-time-grid label { display: grid; gap: 5px; }
+.itinerary-stop .icon-button { background: transparent; }
+.editor-warning { padding: 10px 13px; color: #92400e; font-size: 12px; background: #fffbeb; border-radius: 10px; }
+.itinerary-submit { min-height: 50px !important; justify-content: center !important; }
+@media(max-width: 600px) { .origin-row { flex-wrap: wrap; } .origin-row button { width: 100%; } .itinerary-stop { gap: 7px; padding: 12px; grid-template-columns: 25px minmax(0,1fr) 32px; } .stop-time-grid { gap: 6px; } }
