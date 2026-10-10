@@ -202,12 +202,12 @@ export function Map({ trips, isDemo = false }: { trips: TripAnalysis[]; isDemo?:
       });
 
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right'); map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }), 'top-right');
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right'); const geolocate = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }); map.addControl(geolocate, 'top-right');
 
       let loaded = false;
       map.once('load', () => {
         if (!active) return;
-        loaded = true;
+        loaded = true; setTimeout(() => { geolocate.trigger(); }, 500);
         installLayers(map, tripsRef.current);
         fitToTrips(map, tripsRef.current, false);
         requestAnimationFrame(() => map.resize());

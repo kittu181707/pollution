@@ -95,12 +95,12 @@ export function IndiaScreen() {
         pitchWithRotate: false,
       });
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right'); map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }), 'top-right');
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right'); const geolocate = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }); map.addControl(geolocate, 'top-right');
 
       let loaded = false;
       map.once('load', () => {
         if (!active) return;
-        loaded = true;
+        loaded = true; setTimeout(() => { geolocate.trigger(); }, 500);
         map.addSource('india-stations', {
           type: 'geojson',
           data: stationCollection(stationsRef.current) as any,
