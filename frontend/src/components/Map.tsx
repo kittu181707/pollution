@@ -48,25 +48,18 @@ function sampleCollection(trips: TripAnalysis[]): FeatureCollection {
 
 function endpointCollection(trips: TripAnalysis[]): FeatureCollection {
   const features: FeatureCollection['features'] = [];
-  for (const trip of trips) {
+  trips.forEach((trip, index) => {
     const geometry = trip.recommended.geometry.length ? trip.recommended.geometry : trip.original.geometry;
-    const start = geometry[0];
+    if (index === 0 && geometry[0]) {
+      features.push({ type: 'Feature', properties: { kind: 'start', tripId: trip.tripId, label: trip.origin, order: 0, time: trip.original.departureTime },
+        geometry: { type: 'Point', coordinates: [geometry[0].lon, geometry[0].lat] } });
+    }
     const end = geometry.at(-1);
-    if (start) {
-      features.push({
-        type: 'Feature',
-        properties: { kind: 'start', tripId: trip.tripId },
-        geometry: { type: 'Point', coordinates: [start.lon, start.lat] },
-      });
-    }
     if (end) {
-      features.push({
-        type: 'Feature',
-        properties: { kind: 'end', tripId: trip.tripId },
-        geometry: { type: 'Point', coordinates: [end.lon, end.lat] },
-      });
+      features.push({ type: 'Feature', properties: { kind: 'end', tripId: trip.tripId, label: trip.destination, order: index + 1, time: trip.recommended.departureTime },
+        geometry: { type: 'Point', coordinates: [end.lon, end.lat] } });
     }
-  }
+  });
   return { type: 'FeatureCollection', features };
 }
 
@@ -155,85 +148,111 @@ function installLayers(map: MapLibreMap, trips: TripAnalysis[]) {
   });
 }
 
+// A keyless real basemap prevents blank screens when runtime map credentials are absent.
+const OPEN_MAP_STYLE = {
+  version: 8,
+  sources: { 'openstreetmap': {
+    type: 'raster',
+    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+    tileSize: 256,
+    attribution: '© OpenStreetMap contributors',
+  } },
+  layers: [{ id: 'openstreetmap', type: 'raster', source: 'openstreetmap' }],
+};
+
 async function runtimeConfig(): Promise<RuntimeConfig> {
   if (AMAZON_LOCATION_API_KEY) {
     return {
-      region: AWS_REGION || 'ap-south-1',
+      region: AWS_REGION || 'us-east-1',
       mapStyle: AMAZON_LOCATION_MAP_STYLE,
       mapApiKey: AMAZON_LOCATION_API_KEY,
       source: 'build-time Amazon Location configuration',
     };
   }
-  return api.runtimeConfig();
+  // Missing backend map config must never prevent the basemap from rendering.
+  return api.runtimeConfig().catch(() => ({
+    region: AWS_REGION || 'us-east-1', mapStyle: AMAZON_LOCATION_MAP_STYLE,
+    mapApiKey: null, source: 'OpenStreetMap tiles',
+  }));
 }
 
-export function Map({ trips, isDemo = false }: { trips: TripAnalysis[]; isDemo?: boolean }) {
+export function Map({ trips, liveLocation, isDemo = false }: { trips: TripAnalysis[]; liveLocation?: Coordinates | null; isDemo?: boolean }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
   const tripsRef = useRef(trips);
+  const locationRef = useRef(liveLocation);
   const [status, setStatus] = useState<'loading' | 'live' | 'fallback'>('loading');
-
+  const [basemap, setBasemap] = useState('OpenStreetMap');
   tripsRef.current = trips;
+  locationRef.current = liveLocation;
 
   useEffect(() => {
     let active = true;
-
-    if (!containerRef.current) {
-      setStatus('fallback');
-      return;
-    }
-
     void runtimeConfig().then((config) => {
-      if (!active || !containerRef.current || !config.mapApiKey) {
-        if (active) setStatus('fallback');
-        return;
-      }
-
+      if (!active || !containerRef.current) return;
       const first = allPoints(tripsRef.current)[0];
+      let usePublicStyle = !config.mapApiKey;
       const map = new maplibregl.Map({
         container: containerRef.current,
-        style: styleUrl(config),
-        center: first ? [first.lon, first.lat] : [77.209, 28.6139],
-        zoom: first ? 11 : 5,
+        style: (usePublicStyle ? OPEN_MAP_STYLE : styleUrl(config)) as any,
+        center: first ? [first.lon, first.lat] : locationRef.current ? [locationRef.current.lon, locationRef.current.lat] : [78.9629, 20.5937],
+        zoom: first ? 12 : locationRef.current ? 13 : 4,
         attributionControl: { compact: true },
         validateStyle: false,
         cooperativeGestures: false,
         pitchWithRotate: false,
       });
-
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right'); const geolocate = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserLocation: true }); map.addControl(geolocate, 'top-right');
-
-      let loaded = false;
-      map.once('load', () => {
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'top-right');
+      const displayLocation = () => {
+        const position = locationRef.current;
+        if (!position) return;
+        if (!markerRef.current) {
+          markerRef.current = new maplibregl.Marker({ color: '#059669' }).addTo(map);
+          markerRef.current.getElement().setAttribute('title', 'Your live location');
+        }
+        markerRef.current.setLngLat([position.lon, position.lat]);
+      };
+      map.on('style.load', () => {
         if (!active) return;
-        loaded = true; setTimeout(() => { geolocate.trigger(); }, 500);
-        installLayers(map, tripsRef.current);
-        fitToTrips(map, tripsRef.current, false);
-        requestAnimationFrame(() => map.resize());
+        if (!map.getSource('current-routes')) installLayers(map, tripsRef.current);
+        displayLocation();
+        if (tripsRef.current.length) fitToTrips(map, tripsRef.current, false);
+        else if (locationRef.current) map.jumpTo({ center: [locationRef.current.lon, locationRef.current.lat], zoom: 13 });
+        setBasemap(usePublicStyle ? 'OpenStreetMap' : 'Amazon Location');
         setStatus('live');
+        requestAnimationFrame(() => { if (active) map.resize(); });
       });
-
-      map.on('error', (e) => {
-        console.error('MapLibre Map Error:', e);
-        if (!loaded && active) {
-          try {
-            map.remove();
-          } catch (err) {
-            console.error('MapLibre map.remove() error:', err);
-          }
-          mapRef.current = null;
+      map.on('click', 'route-endpoints-layer', (event) => {
+        const feature = event.features?.[0];
+        if (!feature?.geometry || feature.geometry.type !== 'Point') return;
+        const point = feature.geometry.coordinates;
+        const info = feature.properties || {};
+        new maplibregl.Popup({ offset: 14, closeButton: true })
+          .setLngLat([point[0], point[1]])
+          .setText(`Stop ${info.order ?? ''}: ${info.label || 'Location'} · ${info.kind === 'start' ? 'Depart' : 'Arrive'} near ${info.time || 'scheduled time'}`)
+          .addTo(map);
+      });
+      map.on('mouseenter', 'route-endpoints-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'route-endpoints-layer', () => { map.getCanvas().style.cursor = ''; });
+      map.on('error', (event) => {
+        const details = String(event.error?.message || event.error || '');
+        console.warn('Map tile/style issue:', details);
+        if (!usePublicStyle) {
+          usePublicStyle = true;
+          setBasemap('OpenStreetMap');
+          map.setStyle(OPEN_MAP_STYLE as any);
+        } else if (!map.isStyleLoaded()) {
+          // Only the last-resort diagram is shown when both tile sources fail.
           setStatus('fallback');
         }
       });
-    }).catch(() => {
-      if (active) setStatus('fallback');
-    });
-
+    }).catch(() => { if (active) setStatus('fallback'); });
     return () => {
       active = false;
-      mapRef.current?.remove();
-      mapRef.current = null;
+      markerRef.current?.remove(); markerRef.current = null;
+      mapRef.current?.remove(); mapRef.current = null;
     };
   }, []);
 
@@ -244,21 +263,29 @@ export function Map({ trips, isDemo = false }: { trips: TripAnalysis[]; isDemo?:
     setSource(map, 'recommended-routes', lineCollection(trips, 'recommended'));
     setSource(map, 'pollution-samples', sampleCollection(trips));
     setSource(map, 'route-endpoints', endpointCollection(trips));
-    fitToTrips(map, trips, true);
+    if (trips.length) fitToTrips(map, trips, true);
   }, [trips, status]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !liveLocation || status !== 'live') return;
+    if (!markerRef.current) markerRef.current = new maplibregl.Marker({ color: '#059669' }).addTo(map);
+    markerRef.current.setLngLat([liveLocation.lon, liveLocation.lat]);
+    if (!trips.length) map.easeTo({ center: [liveLocation.lon, liveLocation.lat], zoom: 13, duration: 350 });
+  }, [liveLocation?.lat, liveLocation?.lon, status, trips.length]);
+
   return <div className="aws-map-shell">
-    <div ref={containerRef} className={`aws-live-map ${status === 'fallback' ? 'hidden' : ''}`} aria-label="Interactive Amazon Location live traffic map"/>
+    <div ref={containerRef} className={`aws-live-map ${status === 'fallback' ? 'hidden' : ''}`} aria-label="Interactive live map with daily stops"/>
     {status === 'fallback' && <MapFallback trips={trips}/>}
-    {status === 'loading' && <div className="map-loading">Loading Amazon Location map…</div>}
+    {status === 'loading' && <div className="map-loading">Loading interactive map…</div>}
     <div className={`map-live-badge ${status === 'fallback' ? 'fallback' : ''}`}>
-      {status === 'live' ? (isDemo ? 'AWS LIVE MAP · DEMO ROUTES' : 'AWS LIVE TRAFFIC') : 'ROUTE GEOMETRY FALLBACK'}
+      {status === 'live' ? (isDemo ? `${basemap} · DEMO` : basemap) : status === 'loading' ? 'LOADING MAP' : 'MAP UNAVAILABLE'}
     </div>
-    <div className="map-route-legend">
-      <span><i className="map-line current"/>Current</span>
-      <span><i className="map-line recommended"/>Recommended</span>
-      <span><i className="map-dot"/>PM2.5 samples</span>
-    </div>
+    {trips.length > 0 && <div className="map-route-legend">
+      <span><i className="map-line current"/>Original</span>
+      <span><i className="map-line recommended"/>Optimized</span>
+      <span><i className="map-dot"/>PM2.5</span>
+    </div>}
   </div>;
 }
 
