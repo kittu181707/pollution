@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
-import { Sidebar, type NavTab } from './components/Sidebar';
+import { BottomNav, type NavTab } from './components/BottomNav';
 import { Drawer } from './components/Drawer';
 import { AcceptedScreen } from './screens/AcceptedScreen';
 import { AnalysisScreen } from './screens/AnalysisScreen';
@@ -164,10 +164,10 @@ export default function App() {
     if (next === 'optimize') setStep(analysis ? 'final' : 'landing');
   };
 
-  if (tab === 'history') return <div className="app-container"><Sidebar active={tab} onChange={onNav}/><main className="main-content"><HistoryScreen plans={history} loading={historyLoading} onRefresh={refreshHistory}/></main></div>;
-  if (tab === 'settings') return <div className="app-container"><Sidebar active={tab} onChange={onNav}/><main className="main-content"><SettingsScreen maxExtra={maxExtra} setMaxExtra={setMaxExtra}/></main></div>;
-  if (tab === 'impact') return <div className="app-container"><Sidebar active={tab} onChange={onNav}/><main className="main-content"><ImpactScreen /></main></div>;
-  if (tab === 'india') return <div className="app-container"><Sidebar active={tab} onChange={onNav}/><main className="main-content"><IndiaScreen /></main></div>;
+  if (tab === 'history') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><HistoryScreen plans={history} loading={historyLoading} onRefresh={refreshHistory}/></main></div>;
+  if (tab === 'settings') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><SettingsScreen maxExtra={maxExtra} setMaxExtra={setMaxExtra}/></main></div>;
+  if (tab === 'impact') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><ImpactScreen /></main></div>;
+  if (tab === 'india') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><IndiaScreen /></main></div>;
 
   let content;
   if (step === 'landing') {
@@ -186,7 +186,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Sidebar active={tab} onChange={onNav} />
+      <BottomNav active={tab} onChange={onNav} />
       <main className="main-content">
         {isDemo && <div style={{background: 'var(--red)', color: 'white', padding: '6px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold'}}>DEMO MODE ACTIVE</div>}
         {showMap ? (
