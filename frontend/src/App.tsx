@@ -16,10 +16,11 @@ import { ImpactScreen } from './screens/ImpactScreen';
 import { IndiaScreen } from './screens/IndiaScreen';
 import { TodayScreen } from './screens/TodayScreen';
 import { Map } from './components/Map';
+import { LiveEnvironmentSnapshot } from './components/LiveEnvironmentSnapshot';
 import type { AcceptedPlan, AgendaPayload, DayAnalysis, JourneyInput, TripAnalysis, Coordinates } from './types';
 import { deriveJourneys, getUserId, localDate, readStoredNumber, storeNumber } from './utils';
 
-const blankAgenda = (): AgendaPayload => ({ date: localDate(), homeLocation: 'Home', events: [] });
+const blankAgenda = (location?: Coordinates | null): AgendaPayload => ({ date: localDate(), homeLocation: location ? `${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}` : 'Home', events: [] });
 type Step = 'landing'|'import'|'manual'|'travel'|'analysis'|'overview'|'changes'|'final'|'accepted';
 type AgendaMode = 'import' | 'manual';
 
@@ -70,7 +71,9 @@ export default function App() {
 
   const startAgenda = (mode: AgendaMode) => {
     setIsDemo(false);
-    setAgenda(blankAgenda());
+    setAgenda(blankAgenda(liveLocation));
+    setJourneys([]);
+    setAnalysis(null);
     setAgendaMode(mode);
     setStep(mode);
     setError(undefined);
@@ -110,7 +113,7 @@ export default function App() {
     setBusy(true); setError(undefined);
     try {
       const parsed = await api.parseIcs(await file.text());
-      setAgenda({ ...parsed, homeLocation: agenda.homeLocation || 'Home' });
+      setAgenda({ ...parsed, homeLocation: agenda.homeLocation !== 'Home' ? agenda.homeLocation : (liveLocation ? `${liveLocation.lat.toFixed(6)}, ${liveLocation.lon.toFixed(6)}` : parsed.homeLocation) });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not parse calendar');
     } finally {
@@ -132,14 +135,20 @@ export default function App() {
 
   const runAnalysis = async () => {
     if (busy) return;
+    if (!agenda.events.length) { setStep('manual'); setError('Add at least one stop before analyzing your day.'); return; }
+    const plannedJourneys = journeys.length ? journeys : deriveJourneys(agenda.events, agenda.homeLocation);
+    if (!plannedJourneys.length) { setStep('manual'); setError('Add a destination to continue.'); return; }
     if (!userId) { setError('Private session is initializing. Please retry.'); return; }
     setStep('analysis'); setError(undefined); setBusy(true);
     try {
-      const result = await api.analyzeDay({ ...agenda, userId, journeys, maxExtraMinutes: maxExtra, demoMode: isDemo });
+      const result = await api.analyzeDay({ ...agenda, userId, journeys: plannedJourneys, maxExtraMinutes: maxExtra, demoMode: isDemo });
       setAnalysis(result); 
+      setJourneys(plannedJourneys);
+      setTab('today');
       setStep('landing'); // Render dashboard
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Analysis failed');
+      setStep('travel');
     } finally {
       setBusy(false);
     }
@@ -187,20 +196,24 @@ export default function App() {
   const onNav = (next: NavTab) => {
     setTab(next);
     if (next === 'today') setStep('landing');
-    if (next === 'optimize') setStep(analysis ? 'final' : 'landing');
+    if (next === 'optimize') {
+      if (analysis) setStep('final');
+      else if (agenda.events.length) continueToTravel();
+      else { setAgenda(blankAgenda(liveLocation)); setAgendaMode('manual'); setStep('manual'); }
+    }
   };
 
-  if (tab === 'history') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><HistoryScreen plans={history} loading={historyLoading} onRefresh={refreshHistory}/></main></div>;
-  if (tab === 'settings') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><SettingsScreen maxExtra={maxExtra} setMaxExtra={setMaxExtra}/></main></div>;
-  if (tab === 'impact') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><ImpactScreen /></main></div>;
-  if (tab === 'india') return <div className="app-container"><BottomNav active={tab} onChange={onNav}/><main className="main-content"><IndiaScreen /></main></div>;
 
   let content;
-  if (step === 'landing') {
+  if (tab === 'history') content = <HistoryScreen plans={history} loading={historyLoading} onRefresh={refreshHistory}/>;
+  else if (tab === 'settings') content = <SettingsScreen maxExtra={maxExtra} setMaxExtra={setMaxExtra}/>;
+  else if (tab === 'impact') content = <ImpactScreen />;
+  else if (tab === 'india') content = <IndiaScreen />;
+  else if (step === 'landing') {
     content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} liveLocation={liveLocation} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} />;
   }
-  else if (step === 'import' || step === 'manual') content = <ImportScreen agenda={agenda} setAgenda={setAgenda} mode={step} onBack={() => setStep('landing')} onContinue={continueToTravel} onIcs={importIcs} busy={busy} error={error}/>;
-  else if (step === 'travel') content = <TravelScreen journeys={journeys} setJourneys={setJourneys} maxExtra={maxExtra} setMaxExtra={setMaxExtra} onBack={() => setStep(agendaMode)} onAnalyze={runAnalysis} isDemo={isDemo}/>;
+  else if (step === 'import' || step === 'manual') content = <ImportScreen agenda={agenda} setAgenda={setAgenda} mode={step} onBack={() => setStep('landing')} onContinue={continueToTravel} onIcs={importIcs} busy={busy} error={error} liveLocation={liveLocation}/>;
+  else if (step === 'travel') content = <TravelScreen journeys={journeys} setJourneys={setJourneys} maxExtra={maxExtra} setMaxExtra={setMaxExtra} onBack={() => setStep(agendaMode)} onAnalyze={runAnalysis} isDemo={isDemo} busy={busy} error={error}/>;
   else if (step === 'analysis') content = <AnalysisScreen error={error} onBack={() => setStep('travel')}/>;
   else if (step === 'overview' && analysis) content = <OverviewScreen analysis={analysis} onChanges={() => setStep('changes')} onKeep={() => { setAnalysis(null); setStep('landing'); }}/>;
   else if (step === 'changes' && analysis) content = <ChangesScreen analysis={analysis} onBack={() => setStep('overview')} onWhy={openWhy} onFinal={() => setStep('final')}/>;
@@ -210,12 +223,19 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <BottomNav active={tab} onChange={onNav} />
+      <header className="app-topbar">
+        <div className="app-welcome">
+          <span className="welcome-kicker">YOUR DAILY ENVIRONMENTAL COMPANION</span>
+          <h1>Good morning. <span>Here's your environmental plan for today.</span></h1>
+        </div>
+        <div className="top-environment">
+          <LiveEnvironmentSnapshot homeLocation={agenda.homeLocation} liveLocation={liveLocation} isDemo={isDemo} chipMode={true}/>
+        </div>
+      </header>
       <main className="main-content global-split-layout">
-        <div className="global-panel-col">
-          {isDemo && <div style={{background: 'var(--red)', color: 'white', padding: '6px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0}}>DEMO MODE ACTIVE</div>}
+        <section className="global-panel-col">
+          {isDemo && <div className="demo-banner">DEMO MODE · Sample routes and conditions</div>}
           {content}
-          
           {whyTrip && <Drawer title="Why this changed" onClose={() => setWhyTrip(null)}>
             <div className="why-body">
               <div className="why-copy">{whyText}</div>
@@ -224,14 +244,18 @@ export default function App() {
                 <div><dt>Recommended</dt><dd>{whyTrip.recommended.modeledExposure.toFixed(0)}</dd></div>
                 <div><dt>Extra travel</dt><dd>{whyTrip.recommended.travelMinutes - whyTrip.original.travelMinutes >= 0 ? '+' : ''}{whyTrip.recommended.travelMinutes - whyTrip.original.travelMinutes} min</dd></div>
               </dl>
-              <div className="fine-print">Numbers come from the deterministic optimizer.</div>
             </div>
           </Drawer>}
-        </div>
-        <div className="global-map-col">
-          <Map trips={analysis?.trips || []} isDemo={isDemo} />
-        </div>
+        </section>
+        <aside className="global-map-col" aria-label="Live route overview">
+          <div className="compact-map-card">
+            <div className="compact-map-head"><div><span className="welcome-kicker">YOUR ROUTE</span><h2>Live map</h2></div><span className="location-indicator">{liveLocation ? 'Location detected' : 'Enable location for live position'}</span></div>
+            <div className="compact-map-frame"><Map trips={analysis?.trips || []} liveLocation={liveLocation} isDemo={isDemo} /></div>
+            <p className="compact-map-note">{analysis?.trips.length ? `${analysis.trips.length} journey${analysis.trips.length === 1 ? '' : 's'} mapped · Click stops for details` : 'Your live position appears here. Add stops and analyze to plot your day.'}</p>
+          </div>
+        </aside>
       </main>
+      <BottomNav active={tab} onChange={onNav}/>
     </div>
   );
 }
