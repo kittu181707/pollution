@@ -2,8 +2,8 @@
 import type { JourneyInput, TransportMode } from '../types';
 import { modes, shortTime } from '../utils';
 
-export function TravelScreen({ journeys, setJourneys, maxExtra, setMaxExtra, onBack, onAnalyze, isDemo }: {
-  journeys: JourneyInput[]; setJourneys: (value: JourneyInput[]) => void; maxExtra: number; setMaxExtra: (value: number) => void; onBack: () => void; onAnalyze: () => void; isDemo: boolean;
+export function TravelScreen({ journeys, setJourneys, maxExtra, setMaxExtra, onBack, onAnalyze, isDemo, busy = false, error }: {
+  journeys: JourneyInput[]; setJourneys: (value: JourneyInput[]) => void; maxExtra: number; setMaxExtra: (value: number) => void; onBack: () => void; onAnalyze: () => void; isDemo: boolean; busy?: boolean; error?: string;
 }) {
   const update = (id: string, patch: Partial<JourneyInput>) => setJourneys(journeys.map((j) => j.tripId === id ? { ...j, ...patch } : j));
   
@@ -38,7 +38,8 @@ export function TravelScreen({ journeys, setJourneys, maxExtra, setMaxExtra, onB
     </div>
     
     <div style={{ marginTop: '32px' }}>
-      <button className="primary large full" onClick={onAnalyze}>Find fastest route</button>
+      {error && <div className="error-banner" role="alert">{error}</div>}
+      <button className="primary large full" onClick={onAnalyze} disabled={busy}>{busy ? 'Analyzing your day…' : 'Analyze & optimize my day'}</button>
     </div>
   </div>;
 }
