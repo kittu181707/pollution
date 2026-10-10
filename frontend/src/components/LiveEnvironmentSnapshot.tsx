@@ -52,7 +52,7 @@ function ageLabel(updatedAt?: string) {
   return `updated ${Math.max(1, Math.round(age / 60_000))} min ago`;
 }
 
-export function LiveEnvironmentSnapshot({ homeLocation, isDemo }: { homeLocation: string; isDemo: boolean }) {
+export function LiveEnvironmentSnapshot({ homeLocation, isDemo, chipMode }: { homeLocation: string; isDemo: boolean; chipMode?: boolean }) {
   const [environment, setEnvironment] = useState<EnvironmentSnapshot | null>(isDemo ? DEMO : null);
   const [query, setQuery] = useState<Query | null>(null);
   const [busy, setBusy] = useState(!isDemo);
@@ -133,6 +133,13 @@ export function LiveEnvironmentSnapshot({ homeLocation, isDemo }: { homeLocation
   }, [environment, isDemo]);
 
   if (!environment) {
+    if (chipMode) {
+      return (
+        <div className="environment-chip-row">
+          <div className="env-chip error"><LocateFixed size={14}/> <span>{busy ? 'CONNECTING...' : 'LIVE CONDITIONS UNAVAILABLE'}</span></div>
+        </div>
+      );
+    }
     return <section className="snapshot-card live-snapshot">
       <div className="snapshot-header">
         <div><span className="snapshot-kicker">Environmental snapshot</span><h3>Live conditions</h3></div>
@@ -143,6 +150,18 @@ export function LiveEnvironmentSnapshot({ homeLocation, isDemo }: { homeLocation
         <span>{error || 'Finding current environmental conditions…'}</span>
       </div>
     </section>;
+  }
+
+  if (chipMode) {
+    return (
+      <div className="environment-chip-row">
+        <div className="env-chip"><ThermometerSun size={14}/> <span>{environment.temperature.toFixed(0)}°C</span></div>
+        <div className="env-chip"><Gauge size={14}/> <span>AQI {Math.round(environment.aqi)}</span></div>
+        <div className="env-chip"><Wind size={14}/> <span>PM2.5 {environment.pm25.toFixed(0)}</span></div>
+        <div className="env-chip"><Wind size={14}/> <span>PM10 {environment.pm10.toFixed(0)}</span></div>
+        <div className="env-chip"><Sun size={14}/> <span>UV {environment.uvIndex.toFixed(1)}</span></div>
+      </div>
+    );
   }
 
   return <section className="snapshot-card live-snapshot" aria-label="Live environmental conditions">

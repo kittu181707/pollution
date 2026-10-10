@@ -438,9 +438,33 @@
 }
 .dashboard-header .chips {
   flex-shrink: 0;
-  transform: scale(0.9);
-  transform-origin: right bottom;
   margin: 0;
+}
+
+.environment-chip-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.env-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.env-chip svg {
+  color: var(--green);
+}
+.env-chip.error svg {
+  color: var(--red);
 }
 
 .dashboard-middle {
@@ -479,4 +503,17 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dashboard-middle {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-bottom, .dashboard-footer {
+    grid-template-columns: 1fr;
+  }
 }

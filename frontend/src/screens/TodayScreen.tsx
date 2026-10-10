@@ -45,7 +45,7 @@ export function TodayScreen({
           <h1>Good morning.<br/>Here's your environmental plan for today.</h1>
         </div>
         <div className="chips">
-          <LiveEnvironmentSnapshot homeLocation={agenda?.homeLocation || 'Home'} isDemo={isDemo}/>
+          <LiveEnvironmentSnapshot homeLocation={agenda?.homeLocation || 'Home'} isDemo={isDemo} chipMode={true} />
         </div>
       </header>
 
