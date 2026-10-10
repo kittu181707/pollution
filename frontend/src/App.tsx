@@ -16,7 +16,7 @@ import { ImpactScreen } from './screens/ImpactScreen';
 import { IndiaScreen } from './screens/IndiaScreen';
 import { TodayScreen } from './screens/TodayScreen';
 import { Map } from './components/Map';
-import type { AcceptedPlan, AgendaPayload, DayAnalysis, JourneyInput, TripAnalysis } from './types';
+import type { AcceptedPlan, AgendaPayload, DayAnalysis, JourneyInput, TripAnalysis, Coordinates } from './types';
 import { deriveJourneys, getUserId, localDate, readStoredNumber, storeNumber } from './utils';
 
 const blankAgenda = (): AgendaPayload => ({ date: localDate(), homeLocation: 'Home', events: [] });
@@ -42,13 +42,22 @@ export default function App() {
   const [history, setHistory] = useState<AcceptedPlan[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
-
+  const [liveLocation, setLiveLocation] = useState<Coordinates | null>(null);
   const [userId, setUserId] = useState('');
+
   useEffect(() => {
     let active = true;
     void getUserId().then((value) => { if (active) setUserId(value); }).catch(() => {
       if (active) setError('Private session could not initialize. A secure browser connection is required.');
     });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { if (active) setLiveLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+        () => { /* ignore */ }
+      );
+    }
+
     return () => { active = false; };
   }, []);
   const setMaxExtra = (value: number) => { setMaxExtraState(value); storeNumber('max_extra_minutes', value); };
@@ -182,7 +191,7 @@ export default function App() {
 
   let content;
   if (step === 'landing') {
-    content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} mapComponent={<Map trips={analysis?.trips || []} isDemo={isDemo} />}/>;
+    content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} liveLocation={liveLocation} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} mapComponent={<Map trips={analysis?.trips || []} isDemo={isDemo} />}/>;
   }
   else if (step === 'import' || step === 'manual') content = <ImportScreen agenda={agenda} setAgenda={setAgenda} mode={step} onBack={() => setStep('landing')} onContinue={continueToTravel} onIcs={importIcs} busy={busy} error={error}/>;
   else if (step === 'travel') content = <TravelScreen journeys={journeys} setJourneys={setJourneys} maxExtra={maxExtra} setMaxExtra={setMaxExtra} onBack={() => setStep(agendaMode)} onAnalyze={runAnalysis} isDemo={isDemo}/>;
@@ -191,7 +200,7 @@ export default function App() {
   else if (step === 'changes' && analysis) content = <ChangesScreen analysis={analysis} onBack={() => setStep('overview')} onWhy={openWhy} onFinal={() => setStep('final')}/>;
   else if (step === 'final' && analysis) content = <FinalPlanScreen analysis={analysis} onBack={() => setStep('changes')} onAccept={acceptPlan} busy={busy}/>;
   else if (step === 'accepted' && accepted) content = <AcceptedScreen plan={accepted} onDone={() => { setTab('today'); setStep('landing'); }}/>;
-  else content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} mapComponent={<Map trips={analysis?.trips || []} isDemo={isDemo} />}/>;
+  else content = <TodayScreen agenda={agenda} journeys={journeys} analysis={analysis} whyText={whyText} whyTrip={whyTrip} onWhy={openWhy} busy={busy} isDemo={isDemo} liveLocation={liveLocation} onImport={() => startAgenda('import')} onManual={() => startAgenda('manual')} onDemo={loadDemo} onAnalyze={runAnalysis} error={error} mapComponent={<Map trips={analysis?.trips || []} isDemo={isDemo} />}/>;
 
   return (
     <div className="app-container">

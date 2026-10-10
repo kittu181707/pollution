@@ -1,6 +1,6 @@
 import { Search, ArrowRight, Calendar, AlertTriangle, ArrowDown, Clock3, Sun, Wind, HelpCircle, Leaf, Users } from 'lucide-react';
 import { LiveEnvironmentSnapshot } from '../components/LiveEnvironmentSnapshot';
-import type { AgendaPayload, JourneyInput, DayAnalysis, TripAnalysis } from '../types';
+import type { AgendaPayload, JourneyInput, DayAnalysis, TripAnalysis, Coordinates } from '../types';
 import { shortTime } from '../utils';
 
 export function TodayScreen({
@@ -9,6 +9,7 @@ export function TodayScreen({
   analysis,
   busy,
   isDemo,
+  liveLocation,
   onImport,
   onManual,
   onDemo,
@@ -24,6 +25,7 @@ export function TodayScreen({
   analysis?: DayAnalysis | null;
   busy: boolean;
   isDemo: boolean;
+  liveLocation?: Coordinates | null;
   onImport: () => void;
   onManual: () => void;
   onDemo: () => void;
@@ -45,7 +47,7 @@ export function TodayScreen({
           <h1>Good morning.<br/>Here's your environmental plan for today.</h1>
         </div>
         <div className="chips">
-          <LiveEnvironmentSnapshot homeLocation={agenda?.homeLocation || 'Home'} isDemo={isDemo} chipMode={true} />
+          <LiveEnvironmentSnapshot homeLocation={agenda?.homeLocation || 'Home'} liveLocation={liveLocation} isDemo={isDemo} chipMode={true} />
         </div>
       </header>
 

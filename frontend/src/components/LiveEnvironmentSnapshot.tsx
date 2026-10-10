@@ -52,7 +52,7 @@ function ageLabel(updatedAt?: string) {
   return `updated ${Math.max(1, Math.round(age / 60_000))} min ago`;
 }
 
-export function LiveEnvironmentSnapshot({ homeLocation, isDemo, chipMode }: { homeLocation: string; isDemo: boolean; chipMode?: boolean }) {
+export function LiveEnvironmentSnapshot({ homeLocation, liveLocation, isDemo, chipMode }: { homeLocation: string; liveLocation?: Coordinates | null; isDemo: boolean; chipMode?: boolean }) {
   const [environment, setEnvironment] = useState<EnvironmentSnapshot | null>(isDemo ? DEMO : null);
   const [query, setQuery] = useState<Query | null>(null);
   const [busy, setBusy] = useState(!isDemo);
@@ -71,6 +71,9 @@ export function LiveEnvironmentSnapshot({ homeLocation, isDemo, chipMode }: { ho
     }
 
     const resolveQuery = async () => {
+      if (liveLocation) {
+        return { position: liveLocation, label: 'Current location' } satisfies Query;
+      }
       if (meaningfulLocation(homeLocation)) {
         return { location: homeLocation.trim(), label: homeLocation.trim() } satisfies Query;
       }
@@ -92,7 +95,7 @@ export function LiveEnvironmentSnapshot({ homeLocation, isDemo, chipMode }: { ho
     });
 
     return () => { active = false; };
-  }, [homeLocation, isDemo]);
+  }, [homeLocation, isDemo, liveLocation]);
 
   useEffect(() => {
     if (isDemo || !query) return;
