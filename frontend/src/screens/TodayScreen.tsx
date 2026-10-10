@@ -53,20 +53,21 @@ export function TodayScreen({
 
       {error && <div className="error-banner"><AlertTriangle size={16}/> {error}</div>}
 
-      {!hasAgenda ? (
-        <div className="empty-agenda">
-          <p>You don't have any journeys planned yet.</p>
-          <div className="actions">
-            <button className="primary" onClick={onImport} disabled={busy}><Calendar size={18}/> Import Agenda</button>
-            <button className="secondary" onClick={onManual} disabled={busy}>Plan Manually</button>
-            <button className="text-button" onClick={onDemo} disabled={busy}>Load Demo Day</button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* MIDDLE SECTION */}
-          <div className="dashboard-middle">
-            <div className="journeys-col today-journeys">
+      {/* MIDDLE SECTION */}
+      <div className="dashboard-middle">
+        <div className="journeys-col today-journeys">
+          {!hasAgenda ? (
+            <div className="empty-agenda" style={{ padding: '0', border: 'none', background: 'transparent' }}>
+              <h3 style={{ margin: '0 0 16px 0' }}>Plan your route</h3>
+              <p style={{ margin: '0 0 24px 0' }}>Where are you going today?</p>
+              <div className="actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                <button className="primary" onClick={onManual} disabled={busy}>Enter Origin & Destination</button>
+                <button className="secondary" onClick={onDemo} disabled={busy}>Load Demo Route</button>
+                <button className="text-button" onClick={onImport} disabled={busy}><Calendar size={18}/> Import Agenda</button>
+              </div>
+            </div>
+          ) : (
+          <>
               <h3>Today's journeys</h3>
               <div className="timeline">
                 {journeys.map((journey) => (
@@ -90,9 +91,11 @@ export function TodayScreen({
                   </button>
                 </div>
               )}
-            </div>
+            </>
+          )}
+        </div>
             
-            <div className="map-col">
+        <div className="map-col">
               {mapComponent || <div className="snapshot-empty" style={{height: '100%'}}><AlertTriangle size={20}/> <span>Map will appear here</span></div>}
             </div>
           </div>
@@ -187,8 +190,6 @@ export function TodayScreen({
               </div>
             </div>
           )}
-        </>
-      )}
     </div>
   );
 }
