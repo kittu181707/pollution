@@ -47,18 +47,24 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
+    let watchId: number;
+
     void getUserId().then((value) => { if (active) setUserId(value); }).catch(() => {
       if (active) setError('Private session could not initialize. A secure browser connection is required.');
     });
 
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         (pos) => { if (active) setLiveLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
-        () => { /* ignore */ }
+        () => { if (active) setLiveLocation(null); },
+        { enableHighAccuracy: false, maximumAge: 10 * 60_000, timeout: 10000 }
       );
     }
 
-    return () => { active = false; };
+    return () => { 
+      active = false; 
+      if (watchId !== undefined) navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
   const setMaxExtra = (value: number) => { setMaxExtraState(value); storeNumber('max_extra_minutes', value); };
 

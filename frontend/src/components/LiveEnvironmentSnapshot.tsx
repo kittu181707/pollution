@@ -71,9 +71,18 @@ export function LiveEnvironmentSnapshot({ homeLocation, liveLocation, isDemo, ch
     }
 
     const resolveQuery = async () => {
-      if (liveLocation) {
-        return { position: liveLocation, label: 'Current location' } satisfies Query;
+      if (liveLocation !== undefined) {
+        if (liveLocation) {
+          return { position: liveLocation, label: 'Current location' } satisfies Query;
+        } else if (meaningfulLocation(homeLocation)) {
+          return { location: homeLocation.trim(), label: homeLocation.trim() } satisfies Query;
+        }
+        // If liveLocation is managed externally but is null (e.g., pending or denied),
+        // we shouldn't fallback to our own browserPosition() as it would double-prompt.
+        // We wait for it to be provided, or throw if we must. Actually, just throwing an error:
+        throw new Error('Location pending or unavailable');
       }
+
       if (meaningfulLocation(homeLocation)) {
         return { location: homeLocation.trim(), label: homeLocation.trim() } satisfies Query;
       }
